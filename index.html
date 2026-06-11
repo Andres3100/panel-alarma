@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Administración — Vecinos Alerta</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #333; }
+
+    /* LOGIN */
+    #login-screen {
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; background: #E65100;
+    }
+    .login-card {
+      background: white; padding: 40px; border-radius: 16px;
+      width: 100%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .login-card h1 { font-size: 22px; margin-bottom: 8px; color: #E65100; }
+    .login-card p { color: #888; margin-bottom: 24px; font-size: 14px; }
+
+    /* PANEL */
+    #panel-screen { display: none; }
+    .topbar {
+      background: #E65100; color: white; padding: 14px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .topbar h1 { font-size: 18px; }
+    .topbar span { font-size: 13px; opacity: 0.85; }
+    .topbar button {
+      background: rgba(255,255,255,0.2); color: white; border: none;
+      padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+    /* STATS */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center;
+    }
+    .stat-card .num { font-size: 36px; font-weight: 700; color: #E65100; }
+    .stat-card .label { font-size: 13px; color: #888; margin-top: 4px; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab {
+      padding: 8px 20px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 14px; background: white; color: #666;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .tab.active { background: #E65100; color: white; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* CARD */
+    .card {
+      background: white; border-radius: 12px; padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px;
+    }
+    .card h2 { font-size: 16px; margin-bottom: 16px; color: #333; }
+
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 12px; color: #666; font-weight: 500; }
+    input, select {
+      padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px;
+      font-size: 14px; outline: none;
+    }
+    input:focus, select:focus { border-color: #E65100; }
+
+    /* BUTTONS */
+    .btn {
+      padding: 10px 20px; border-radius: 8px; border: none;
+      cursor: pointer; font-size: 14px; font-weight: 500;
+    }
+    .btn-primary { background: #E65100; color: white; }
+    .btn-primary:hover { background: #BF360C; }
+    .btn-danger { background: #E53935; color: white; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* TABLE */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px 12px; background: #f9f9f9; color: #666; font-size: 12px; font-weight: 600; }
+    td { padding: 12px; border-top: 1px solid #f0f0f0; }
+    tr:hover td { background: #fafafa; }
+
+    /* BADGES */
+    .badge {
+      display: inline-block; padding: 3px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-green { background: #E8F5E9; color: #2E7D32; }
+    .badge-red { background: #FFEBEE; color: #C62828; }
+    .badge-orange { background: #FFF3E0; color: #E65100; }
+    .badge-blue { background: #E3F2FD; color: #1565C0; }
+
+    /* ALERT */
+    .alert {
+      padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .alert-success { background: #E8F5E9; color: #2E7D32; }
+    .alert-error { background: #FFEBEE; color: #C62828; }
+
+    /* CODIGO */
+    .codigo-box {
+      background: #FFF3E0; border: 2px dashed #E65100; border-radius: 12px;
+      padding: 20px; text-align: center; margin-top: 16px;
+    }
+    .codigo-box .codigo { font-size: 32px; font-weight: 700; color: #E65100; letter-spacing: 4px; }
+    .codigo-box p { font-size: 13px; color: #888; margin-top: 8px; }
+
+    .empty { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+    .loading { text-align: center; padding: 20px; color: #aaa; }
+
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>🛡️ Vecinos Alerta</h1>
+    <p>Panel de Administración</p>
+    <div id="login-error" class="alert alert-error" style="display:none"></div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Correo electrónico</label>
+      <input type="email" id="login-email" placeholder="admin@barrio.com">
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" style="width:100%" id="btn-login" onclick="login()">
+      Iniciar Sesión
+    </button>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel-screen">
+  <div class="topbar">
+    <div>
+      <h1>🛡️ Vecinos Alerta — Panel Admin</h1>
+      <span id="topbar-info">Cargando...</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="topbar-nombre" style="font-size:14px"></span>
+      <button onclick="cerrarSesion()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="num" id="stat-vecinos">—</div>
+        <div class="label">Vecinos registrados</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-alertas">—</div>
+        <div class="label">Alertas totales</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-activas">—</div>
+        <div class="label">Alertas activas</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="mostrarTab('vecinos')">Vecinos</button>
+      <button class="tab" onclick="mostrarTab('alertas')">Alertas</button>
+      <button class="tab" onclick="mostrarTab('registrar')">Registrar vecino</button>
+    </div>
+
+    <!-- TAB: Vecinos -->
+    <div id="tab-vecinos" class="tab-content active">
+      <div class="card">
+        <h2>Vecinos del barrio</h2>
+        <div id="tabla-vecinos"><div class="loading">Cargando vecinos...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: Alertas -->
+    <div id="tab-alertas" class="tab-content">
+      <div class="card">
+        <h2>Historial de alertas</h2>
+        <div id="tabla-alertas"><div class="loading">Cargando alertas...</div></div>
+      </div>
+    </div>
+
+    <!-- TAB: Registrar vecino -->
+    <div id="tab-registrar" class="tab-content">
+      <div class="card">
+        <h2>Registrar nuevo vecino</h2>
+        <div id="registro-msg" style="display:none"></div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Nombre completo</label>
+            <input type="text" id="v-nombre" placeholder="Juan García">
+          </div>
+          <div class="form-group">
+            <label>Casa / Apartamento</label>
+            <input type="text" id="v-casa" placeholder="Casa 15">
+          </div>
+          <div class="form-group">
+            <label>Correo electrónico</label>
+            <input type="email" id="v-email" placeholder="juan@gmail.com">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="v-telefono" placeholder="300 123 4567">
+          </div>
+          <div class="form-group">
+            <label>Contraseña inicial</label>
+            <input type="text" id="v-password" placeholder="vecino123">
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end">
+            <button class="btn btn-primary" style="width:100%" onclick="registrarVecino()">
+              Registrar vecino
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Código de invitación del barrio</h2>
+        <p style="font-size:13px;color:#666">Comparte este código con los vecinos para que se registren solos desde la app.</p>
+        <div class="codigo-box">
+          <div class="codigo" id="codigo-barrio">——</div>
+          <p>Los vecinos ingresan este código en la app para unirse al barrio</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = 'https://app-alarma-backend.onrender.com';
+let accessToken = localStorage.getItem('access_token') || '';
+let barrioId = localStorage.getItem('barrio_id') || '';
+let rol = localStorage.getItem('rol') || '';
+
+// Al cargar la página
+window.onload = () => {
+  if (accessToken) {
+    mostrarPanel();
+  }
+};
+
+async function login() {
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
+
+  btn.disabled = true;
+  btn.textContent = 'Iniciando sesión...';
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      if (data.rol === 'vecino') {
+        errEl.textContent = 'Este panel es solo para administradores.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Iniciar Sesión';
+        return;
+      }
+      accessToken = data.access_token;
+      barrioId = data.barrio_id;
+      rol = data.rol;
+      localStorage.setItem('access_token', accessToken);
+      localStorage.setItem('barrio_id', barrioId);
+      localStorage.setItem('rol', rol);
+      localStorage.setItem('nombre', data.nombre);
+      mostrarPanel();
+    } else {
+      errEl.textContent = data.detail || 'Credenciales incorrectas';
+      errEl.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = 'No se pudo conectar al servidor. Espera unos segundos e intenta de nuevo.';
+    errEl.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Iniciar Sesión';
+}
+
+function mostrarPanel() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('panel-screen').style.display = 'block';
+  const nombre = localStorage.getItem('nombre') || '';
+  document.getElementById('topbar-nombre').textContent = nombre;
+  document.getElementById('topbar-info').textContent =
+    rol === 'superadmin' ? 'Super Administrador' : 'Administrador de barrio';
+  cargarDatos();
+}
+
+async function cargarDatos() {
+  await Promise.all([cargarVecinos(), cargarAlertas(), cargarBarrio()]);
+}
+
+async function cargarVecinos() {
+  try {
+    const res = await fetch(`${BASE}/barrio/vecinos`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    if (res.status === 401) { cerrarSesion(); return; }
+    const data = await res.json();
+    const vecinos = Array.isArray(data) ? data : [];
+    document.getElementById('stat-vecinos').textContent = vecinos.length;
+
+    if (vecinos.length === 0) {
+      document.getElementById('tabla-vecinos').innerHTML =
+        '<div class="empty">No hay vecinos registrados aún.</div>';
+      return;
+    }
+
+    let html = `<table>
+      <thead><tr>
+        <th>Nombre</th><th>Casa</th><th>Correo</th><th>Teléfono</th><th>Estado</th>
+      </tr></thead><tbody>`;
+
+    vecinos.forEach(v => {
+      html += `<tr>
+        <td><strong>${v.nombre || '—'}</strong></td>
+        <td>${v.casa || '—'}</td>
+        <td>${v.email || '—'}</td>
+        <td>${v.telefono || '—'}</td>
+        <td><span class="badge badge-green">Activo</span></td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tabla-vecinos').innerHTML = html;
+  } catch (e) {
+    document.getElementById('tabla-vecinos').innerHTML =
+      '<div class="empty">Error cargando vecinos.</div>';
+  }
+}
+
+async function cargarAlertas() {
+  try {
+    const res = await fetch(`${BASE}/alertas`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    const data = await res.json();
+    const alertas = Array.isArray(data) ? data : [];
+    const activas = alertas.filter(a => a.activa).length;
+    document.getElementById('stat-alertas').textContent = alertas.length;
+    document.getElementById('stat-activas').textContent = activas;
+
+    if (alertas.length === 0) {
+      document.getElementById('tabla-alertas').innerHTML =
+        '<div class="empty">No hay alertas registradas.</div>';
+      return;
+    }
+
+    const colores = { robo: 'badge-red', falsa: 'badge-orange', simulacro: 'badge-blue' };
+
+    let html = `<table>
+      <thead><tr>
+        <th>Tipo</th><th>Vecino</th><th>Casa</th><th>Hora</th><th>Estado</th><th>Acción</th>
+      </tr></thead><tbody>`;
+
+    alertas.forEach(a => {
+      const color = colores[a.tipo] || 'badge-blue';
+      html += `<tr>
+        <td><span class="badge ${color}">${(a.tipo || '').toUpperCase()}</span></td>
+        <td>${a.vecino || '—'}</td>
+        <td>${a.casa || '—'}</td>
+        <td>${a.hora || '—'}</td>
+        <td>${a.activa
+          ? '<span class="badge badge-red">ACTIVA</span>'
+          : '<span class="badge badge-green">Resuelta</span>'}</td>
+        <td>${a.activa
+          ? `<button class="btn btn-danger btn-sm" onclick="desactivarAlerta(${a.id})">Resolver</button>`
+          : '—'}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tabla-alertas').innerHTML = html;
+  } catch (e) {
+    document.getElementById('tabla-alertas').innerHTML =
+      '<div class="empty">Error cargando alertas.</div>';
+  }
+}
+
+async function cargarBarrio() {
+  try {
+    const res = await fetch(`${BASE}/barrio/info`, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('codigo-barrio').textContent =
+        data.codigo_unico || '——';
+    }
+  } catch (e) {}
+}
+
+async function registrarVecino() {
+  const nombre = document.getElementById('v-nombre').value;
+  const casa = document.getElementById('v-casa').value;
+  const email = document.getElementById('v-email').value;
+  const telefono = document.getElementById('v-telefono').value;
+  const password = document.getElementById('v-password').value;
+  const msgEl = document.getElementById('registro-msg');
+
+  if (!nombre || !email || !password || !casa) {
+    msgEl.className = 'alert alert-error';
+    msgEl.textContent = 'Nombre, casa, correo y contraseña son obligatorios.';
+    msgEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${BASE}/barrio/vecinos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({ nombre, casa, email, telefono, password })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      msgEl.className = 'alert alert-success';
+      msgEl.textContent = `✅ Vecino registrado correctamente. ID: ${data.vecino_id}`;
+      msgEl.style.display = 'block';
+      document.getElementById('v-nombre').value = '';
+      document.getElementById('v-casa').value = '';
+      document.getElementById('v-email').value = '';
+      document.getElementById('v-telefono').value = '';
+      document.getElementById('v-password').value = '';
+      cargarVecinos();
+    } else {
+      msgEl.className = 'alert alert-error';
+      msgEl.textContent = data.detail || 'Error al registrar vecino.';
+      msgEl.style.display = 'block';
+    }
+  } catch (e) {
+    msgEl.className = 'alert alert-error';
+    msgEl.textContent = 'No se pudo conectar al servidor.';
+    msgEl.style.display = 'block';
+  }
+}
+
+async function desactivarAlerta(id) {
+  try {
+    await fetch(`${BASE}/alertas/${id}/desactivar`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    cargarAlertas();
+  } catch (e) {}
+}
+
+function mostrarTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function cerrarSesion() {
+  localStorage.clear();
+  accessToken = '';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('panel-screen').style.display = 'none';
+}
+
+// Enter en login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+    login();
+  }
+});
+</script>
+</body>
+</html>
