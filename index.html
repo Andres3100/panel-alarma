@@ -480,22 +480,6 @@ async function guardarContactos() {
 }
 
 async function registrarVecino() {
- eliminarVecino(id, nombre) {
-  if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
-  try {
-    const res = await fetch(`${BASE}/barrio/vecinos/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    if (res.ok) {
-      cargarVecinos();
-    } else {
-      alert('Error al eliminar vecino');
-    }
-  } catch (e) {
-    alert('No se pudo conectar al servidor');
-  }
-}
   const nombre = document.getElementById('v-nombre').value;
   const casa = document.getElementById('v-casa').value;
   const email = document.getElementById('v-email').value;
@@ -543,15 +527,6 @@ async function registrarVecino() {
   }
 }
 
-async function desactivarAlerta(id) {
-  try {
-    await fetch(`${BASE}/alertas/${id}/desactivar`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    cargarAlertas();
-  } catch (e) {}
-}
 async function eliminarVecino(id, nombre) {
   if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
   try {
@@ -568,6 +543,16 @@ async function eliminarVecino(id, nombre) {
     alert('No se pudo conectar al servidor');
   }
 }
+async function desactivarAlerta(id) {
+  try {
+    await fetch(`${BASE}/alertas/${id}/desactivar`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    cargarAlertas();
+  } catch (e) {}
+}
+
 function mostrarTab(tab) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
