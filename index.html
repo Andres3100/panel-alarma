@@ -361,7 +361,7 @@ async function cargarVecinos() {
 
     let html = `<table>
       <thead><tr>
-        <th>Nombre</th><th>Casa</th><th>Correo</th><th>Teléfono</th><th>Estado</th>
+        <th>Nombre</th><th>Casa</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Acción</th>
       </tr></thead><tbody>`;
 
     vecinos.forEach(v => {
@@ -371,6 +371,7 @@ async function cargarVecinos() {
         <td>${v.email || '—'}</td>
         <td>${v.telefono || '—'}</td>
         <td><span class="badge badge-green">Activo</span></td>
+<td><button class="btn btn-danger btn-sm" onclick="eliminarVecino(${v.id}, '${v.nombre}')">Eliminar</button></td>
       </tr>`;
     });
 
@@ -479,6 +480,22 @@ async function guardarContactos() {
 }
 
 async function registrarVecino() {
+async function eliminarVecino(id, nombre) {
+  if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
+  try {
+    const res = await fetch(`${BASE}/barrio/vecinos/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    if (res.ok) {
+      cargarVecinos();
+    } else {
+      alert('Error al eliminar vecino');
+    }
+  } catch (e) {
+    alert('No se pudo conectar al servidor');
+  }
+}
   const nombre = document.getElementById('v-nombre').value;
   const casa = document.getElementById('v-casa').value;
   const email = document.getElementById('v-email').value;
