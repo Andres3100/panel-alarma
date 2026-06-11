@@ -236,6 +236,28 @@
       </div>
 
       <div class="card">
+  <h2>Contactos de emergencia del barrio</h2>
+  <p style="font-size:13px;color:#666;margin-bottom:16px">
+    Estos números aparecerán en la app de los vecinos. Déjalos vacíos si no aplican.
+  </p>
+  <div id="contactos-msg" style="display:none"></div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Teléfono del vigilante</label>
+      <input type="text" id="tel-vigilante" placeholder="300 123 4567">
+    </div>
+    <div class="form-group">
+      <label>Teléfono del presidente de junta</label>
+      <input type="text" id="tel-presidente" placeholder="310 987 6543">
+    </div>
+    <div class="form-group full">
+      <button class="btn btn-primary" onclick="guardarContactos()">
+        Guardar contactos
+      </button>
+    </div>
+  </div>
+</div>
+      <div class="card">
         <h2>Código de invitación del barrio</h2>
         <p style="font-size:13px;color:#666">Comparte este código con los vecinos para que se registren solos desde la app.</p>
         <div class="codigo-box">
@@ -417,8 +439,43 @@ async function cargarBarrio() {
       const data = await res.json();
       document.getElementById('codigo-barrio').textContent =
         data.codigo_unico || '——';
+      document.getElementById('tel-vigilante').value = data.telefono_vigilante || '';
+      document.getElementById('tel-presidente').value = data.telefono_presidente || '';
     }
   } catch (e) {}
+}
+
+async function guardarContactos() {
+  const telVigilante = document.getElementById('tel-vigilante').value.trim();
+  const telPresidente = document.getElementById('tel-presidente').value.trim();
+  const msgEl = document.getElementById('contactos-msg');
+
+  try {
+    const res = await fetch(`${BASE}/barrio/contactos`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        telefono_vigilante: telVigilante,
+        telefono_presidente: telPresidente
+      })
+    });
+    if (res.ok) {
+      msgEl.className = 'alert alert-success';
+      msgEl.textContent = '✅ Contactos actualizados correctamente.';
+      msgEl.style.display = 'block';
+    } else {
+      msgEl.className = 'alert alert-error';
+      msgEl.textContent = 'Error al guardar contactos.';
+      msgEl.style.display = 'block';
+    }
+  } catch (e) {
+    msgEl.className = 'alert alert-error';
+    msgEl.textContent = 'No se pudo conectar al servidor.';
+    msgEl.style.display = 'block';
+  }
 }
 
 async function registrarVecino() {
