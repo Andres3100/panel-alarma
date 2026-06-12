@@ -548,6 +548,50 @@ async function registrarVecino() {
   }
 }
 
+async function generarClaveTemporalVecino(vecinoId, nombreVecino) {
+  if (!confirm(`¿Generar clave temporal para ${nombreVecino}?\n\nLa contraseña actual quedará invalidada y el vecino tendrá que cambiarla al ingresar.`)) return;
+  try {
+    const res = await fetch(`${BASE}/barrio/vecinos/${vecinoId}/reset-password`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'Error al generar clave');
+    }
+    const data = await res.json();
+    mostrarModalClaveTemporal(nombreVecino, data.password_temporal);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+function mostrarModalClaveTemporal(nombre, password) {
+  const modal = document.createElement('div');
+  modal.style.cssText = `position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px;`;
+  modal.innerHTML = `
+    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 450px; width: 100%; text-align: center;">
+      <h2 style="margin: 0 0 10px 0; color: #FB8C00;">🔑 Clave temporal generada</h2>
+      <p style="margin: 0 0 20px 0;">Para: <strong>${nombre}</strong></p>
+      <div style="background: #FFF3E0; padding: 24px; border-radius: 8px; margin: 20px 0; border: 2px solid #FB8C00;">
+        <div style="font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #E65100;">${password}</div>
+      </div>
+      <p style="color: #C62828; font-weight: bold; font-size: 14px;">⚠️ Comparte esta contraseña UNA SOLA VEZ.<br>No se podrá volver a ver.</p>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button id="btn-copiar-pwd" style="flex:1; padding: 12px; background: #1565C0; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">📋 Copiar</button>
+        <button id="btn-cerrar-pwd" style="flex:1; padding: 12px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer;">Cerrar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('btn-copiar-pwd').onclick = async (e) => {
+    await navigator.clipboard.writeText(password);
+    e.target.innerText = '✓ Copiado';
+    setTimeout(() => { e.target.innerText = '📋 Copiar'; }, 2000);
+  };
+  document.getElementById('btn-cerrar-pwd').onclick = () => modal.remove();
+}
+
 async function eliminarVecino(id, nombre) {
   if (!confirm(`¿Eliminar a ${nombre}? Esta acción no se puede deshacer.`)) return;
   try {
