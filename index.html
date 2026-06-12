@@ -145,7 +145,70 @@
     <button class="btn btn-primary" style="width:100%" id="btn-login" onclick="login()">
       Iniciar Sesión
     </button>
+    <div style="text-align:center;margin-top:20px;padding-top:20px;border-top:1px solid #eee">
+      <p style="font-size:13px;color:#666;margin-bottom:8px">¿Recién compraste Vink Security?</p>
+      <button class="btn" style="background:#fff;color:#E65100;border:2px solid #E65100;width:100%" onclick="mostrarActivacion()">
+        Activar mi barrio con código
+      </button>
+    </div>
   </div>
+  <!-- ACTIVACIÓN DE BARRIO -->
+<div id="activacion-screen" style="display:none;min-height:100vh;background:#E65100;padding:20px 0;align-items:center;justify-content:center">
+  <div class="login-card" style="max-width:480px;margin:20px auto">
+    <h1>🛡️ Activar mi barrio</h1>
+    <p>Ingresa el código que te entregó Vink Security y configura tu cuenta de administrador.</p>
+    <div id="activacion-error" class="alert alert-error" style="display:none"></div>
+    <div id="activacion-success" class="alert alert-success" style="display:none"></div>
+
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Código de activación</label>
+      <input type="text" id="act-codigo" placeholder="VINK-XXXX-XXXX" style="text-transform:uppercase;letter-spacing:1px">
+    </div>
+
+    <h3 style="font-size:14px;color:#666;margin-top:20px;margin-bottom:12px">Datos del barrio</h3>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Nombre del barrio o conjunto</label>
+        <input type="text" id="act-barrio" placeholder="Conjunto Los Pinos">
+      </div>
+      <div class="form-group">
+        <label>Ciudad</label>
+        <input type="text" id="act-ciudad" placeholder="Bogotá">
+      </div>
+      <div class="form-group">
+        <label>Dirección (opcional)</label>
+        <input type="text" id="act-direccion" placeholder="Calle 50 #20-30">
+      </div>
+    </div>
+
+    <h3 style="font-size:14px;color:#666;margin-top:20px;margin-bottom:12px">Tus datos como administrador</h3>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Tu nombre completo</label>
+        <input type="text" id="act-nombre" placeholder="Carlos Rodríguez">
+      </div>
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input type="email" id="act-email" placeholder="presidente@conjunto.com">
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="text" id="act-telefono" placeholder="300 555 1234">
+      </div>
+      <div class="form-group full">
+        <label>Contraseña (mínimo 6 caracteres)</label>
+        <input type="password" id="act-password" placeholder="••••••••">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;margin-top:20px" id="btn-activar" onclick="activarBarrio()">
+      Activar mi barrio
+    </button>
+    <button class="btn" style="background:transparent;color:#666;width:100%;margin-top:8px" onclick="mostrarLogin()">
+      Cancelar y volver al login
+    </button>
+  </div>
+</div>
 </div>
 
 <!-- PANEL -->
@@ -566,7 +629,82 @@ function cerrarSesion() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('panel-screen').style.display = 'none';
 }
+function mostrarActivacion() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('activacion-screen').style.display = 'flex';
+}
 
+function mostrarLogin() {
+  document.getElementById('activacion-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+async function activarBarrio() {
+  const codigo = document.getElementById('act-codigo').value.trim().toUpperCase();
+  const barrio = document.getElementById('act-barrio').value.trim();
+  const ciudad = document.getElementById('act-ciudad').value.trim();
+  const direccion = document.getElementById('act-direccion').value.trim();
+  const nombre = document.getElementById('act-nombre').value.trim();
+  const email = document.getElementById('act-email').value.trim();
+  const telefono = document.getElementById('act-telefono').value.trim();
+  const password = document.getElementById('act-password').value;
+  const btn = document.getElementById('btn-activar');
+  const errEl = document.getElementById('activacion-error');
+  const okEl = document.getElementById('activacion-success');
+
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  if (!codigo || !barrio || !nombre || !email || !password) {
+    errEl.textContent = 'Completa todos los campos obligatorios.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (password.length < 6) {
+    errEl.textContent = 'La contraseña debe tener al menos 6 caracteres.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Activando...';
+
+  try {
+    const res = await fetch(`${BASE}/auth/activar-barrio`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        codigo,
+        nombre_barrio: barrio,
+        direccion,
+        ciudad,
+        nombre_admin: nombre,
+        email_admin: email,
+        telefono_admin: telefono,
+        password_admin: password
+      })
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      okEl.innerHTML = `✅ Barrio activado correctamente.<br><br>
+        <strong>Tu código de invitación para vecinos:</strong> 
+        <span style="font-size:18px;color:#E65100;letter-spacing:2px">${data.codigo_invitacion}</span><br><br>
+        Ahora inicia sesión con tu correo y contraseña.`;
+      okEl.style.display = 'block';
+      setTimeout(() => mostrarLogin(), 8000);
+    } else {
+      errEl.textContent = data.detail || 'Error al activar el barrio.';
+      errEl.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = 'No se pudo conectar al servidor.';
+    errEl.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Activar mi barrio';
+}
 // Enter en login
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
