@@ -435,7 +435,7 @@ async function cargarVecinos() {
         <td>${v.email || '—'}</td>
         <td>${v.telefono || '—'}</td>
         <td><span class="badge badge-green">Activo</span></td>
-        <td><button class="btn btn-danger btn-sm" onclick="eliminarVecino(${v.id}, '${nombreEscape}')">Eliminar</button></td>
+        <td><button class="btn-temp" onclick="generarClaveTemporalVecino(${v.id}, '${nombreEscape}')">🔑 Clave temporal</button> <button class="btn btn-danger btn-sm" onclick="eliminarVecino(${v.id}, '${nombreEscape}')">Eliminar</button></td>
       </tr>`;
     });
     html += '</tbody></table>';
