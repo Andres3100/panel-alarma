@@ -694,7 +694,19 @@ async function activarBarrio() {
       okEl.style.display = 'block';
       setTimeout(() => mostrarLogin(), 8000);
     } else {
-      errEl.textContent = data.detail || 'Error al activar el barrio.';
+      let mensaje = 'Error al activar el barrio.';
+      if (typeof data.detail === 'string') {
+        mensaje = data.detail;
+      } else if (Array.isArray(data.detail)) {
+        // Errores de validación de Pydantic
+        const errores = data.detail.map(e => {
+          if (e.loc && e.loc.includes('email_admin')) return 'El correo electrónico no es válido.';
+          if (e.msg) return e.msg;
+          return 'Campo inválido';
+        });
+        mensaje = errores.join(' ');
+      }
+      errEl.textContent = mensaje;
       errEl.style.display = 'block';
     }
   } catch (e) {
