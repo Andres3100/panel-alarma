@@ -153,7 +153,7 @@
     </div>
   </div>
   <!-- ACTIVACIÓN DE BARRIO -->
-<div id="activacion-screen" style="display:none;min-height:100vh;background:#E65100;padding:20px 0;align-items:center;justify-content:center">
+<div id="activacion-screen" style="display:none;min-height:100vh;background:#E65100;padding:20px 0">
   <div class="login-card" style="max-width:480px;margin:20px auto">
     <h1>🛡️ Activar mi barrio</h1>
     <p>Ingresa el código que te entregó Vink Security y configura tu cuenta de administrador.</p>
@@ -631,7 +631,7 @@ function cerrarSesion() {
 }
 function mostrarActivacion() {
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('activacion-screen').style.display = 'flex';
+  document.getElementById('activacion-screen').style.display = 'block';
 }
 
 function mostrarLogin() {
